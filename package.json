@@ -1,0 +1,48 @@
+{
+  "name": "adventurevideo",
+  "version": "1.0.0",
+  "description": "Thinkific Hackathon Challenge",
+  "main": "webpack.config.js",
+  "scripts": {
+    "dev": "webpack-dev-server --content-base src --inline --hot",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sope57/adventurevideo.git"
+  },
+  "keywords": [
+    "thinkific",
+    "vanhack",
+    "vanhackathon",
+    "challenge"
+  ],
+  "author": "Jorge Carlos Quevedo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sope57/adventurevideo/issues"
+  },
+  "homepage": "https://github.com/Sope57/adventurevideo#readme",
+  "dependencies": {
+    "axios": "^0.15.2",
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
+    "babel-preset-react": "^6.16.0",
+    "css-loader": "^0.25.0",
+    "extract-text-webpack-plugin": "^1.0.1",
+    "flux": "^3.1.0",
+    "history": "^4.3.0",
+    "node-sass": "^3.10.1",
+    "postcss-loader": "^1.0.0",
+    "precss": "^1.4.0",
+    "react": "^15.3.2",
+    "react-addons-transition-group": "^15.3.2",
+    "react-dom": "^15.3.2",
+    "react-youtube": "^7.2.0",
+    "sass-loader": "^4.0.2",
+    "style-loader": "^0.13.1",
+    "webpack": "^1.13.2",
+    "webpack-dev-server": "^1.16.2"
+  }
+}
