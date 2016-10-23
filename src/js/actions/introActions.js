@@ -11,7 +11,7 @@ export function advanceIntro(count) {
 
 export function queryForVideo(url) {
 	dispatcher.dispatch({ type: "FETCHING_MAIN_VIDEO" });
-	axios.get("http://localhost/Proyectos%20Web/adventurevideo/src/php/getYoutube.php?url=" + url)
+	axios.get("https://sope57.github.io/adventurevideo/src/php/getYoutube.php?url=" + url)
 		.then((response) => {
 			if (response.data.id) {
 				dispatcher.dispatch({ type: "RECEIVED_MAIN_VIDEO", data: response.data });
