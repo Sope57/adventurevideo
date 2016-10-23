@@ -22,6 +22,26 @@ export function finishPromptPoint(index, question, options) {
 	dispatcher.dispatch({ type: "FINISH_PROMPTPOINT", index, question, options });
 }
 
+export function newURLPromptPoint(index, url) {
+	const vidkey = url.substr(url.length - 11, 11);
+	axios.get("https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id="+vidkey+"&key=AIzaSyA0mhtFXzJ_cFy6PMdGqSUJsV8ve8ANDRg")
+		.then((response) => {
+			window.response = response;
+			if (response.data.items[0].id) {
+				dispatcher.dispatch({ type: "RECEIVED_VIDEO", index, data: response.data.items[0] });
+			} else {
+				dispatcher.dispatch({ type: "URL_FETCH_ERROR" });
+			}
+		}).catch((error) => {
+			dispatcher.dispatch({ type: "URL_FETCH_ERROR" });
+		});
+}
+
 export function resetPromptWindow() {
 	dispatcher.dispatch({ type: "RESET_PROMPT_WINDOW" });
 }
+
+export function resetPromptWindowAndAdvance() {
+	dispatcher.dispatch({ type: "RESET_PROMPT_WINDOW_AND_ADVANCE" });
+}
+

@@ -17,6 +17,7 @@ export default class Editor extends React.Component {
 			loadWithPrompts: false,
 			videoPlayer: null,
 			currentPrompt: 0,
+			currentVideo: MainStore.promptRef,
 			promptWindow: MainStore.promptWindow
 		}
 
@@ -63,6 +64,12 @@ export default class Editor extends React.Component {
   			this.setState({
   				promptWindow: null
   			});
+  		});
+  		MainStore.on("resetPromptAndAdvance", ()=>{
+  			this.setState({
+				currentVideo: MainStore.promptRef,
+  				promptWindow: null
+  			});
   		})
   	}
 
@@ -81,7 +88,7 @@ export default class Editor extends React.Component {
     	  		}
 			}
 			player = <YoutubeMoodVideo
-				videoId={MainStore.course.video.id}
+				videoId={MainStore.course.videos[this.state.currentVideo].id}
 				opts={opts}
 				onReady={this._onReady.bind(this)}
 				onStateChange={this._onStateChange.bind(this)}/>
@@ -92,7 +99,7 @@ export default class Editor extends React.Component {
         			'rel': 0,
     	  		}
 			}
-			player = <YoutubeMoodVideo videoId={MainStore.course.video.id} opts={opts} />
+			player = <YoutubeMoodVideo videoId={MainStore.course.videos[this.state.currentVideo].id} opts={opts} />
 		}
 
 		return(

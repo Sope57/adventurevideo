@@ -9,12 +9,24 @@ export default class PromptPoint extends React.Component {
 		this.state = {
 			edit: true,
 			detail: false,
+			outcomeFlag: false,
 			time: null,
 			type: null,
 			outcome: null,
 			error: null
 		}
 	}
+
+	_YTDurationToSeconds(duration) {
+		var match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/)
+
+		var hours = (parseInt(match[1]) || 0);
+		var minutes = (parseInt(match[2]) || 0);
+		var seconds = (parseInt(match[3]) || 0);
+
+		return hours * 3600 + minutes * 60 + seconds;
+	}
+	
 	
 	_cancelPromptPoint() {
 		mainActions.deletePromptPoint(this.props.index);
@@ -29,14 +41,26 @@ export default class PromptPoint extends React.Component {
 	_advancePromptPoint() {
 		const { time, type, outcome } = this.refs;
 		if (time.value && parseFloat(time.value)) {
-			this.setState({
-				detail: true,
-				time: time.value,
-				type: type.value,
-				outcome: outcome.value,
-				error: null
-			});
-			mainActions.savePromptPoint(this.props.index, time.value, type.value, outcome.value);
+			if (parseFloat(time.value) < this._YTDurationToSeconds(MainStore.course.videos[MainStore.promptRef].contentDetails.duration)) {
+				// if(this.props.index == 0 || parseFloat(time.value) >= MainStore.promptPoints[this.props.index - 1].time) {
+					this.setState({
+						detail: true,
+						time: time.value,
+						type: type.value,
+						outcome: outcome.value,
+						error: null
+					});
+					mainActions.savePromptPoint(this.props.index, time.value, type.value, outcome.value);
+				// } else {
+				// 	this.setState({
+				// 		error: "Time must be higher than the previous Prompt Point."
+				// 	});
+				// }
+			} else {
+				this.setState({
+					error: "Prompt time should not exceed video duration."
+				});
+			}
 		} else {
 			this.setState({
 				error: "Please enter a valid time in seconds."
@@ -52,10 +76,12 @@ export default class PromptPoint extends React.Component {
 				const validOptions = [];
 				options.map((option) => {
 					if(option != "") { validOptions.push(option) }
-				})
+				});
+				const outcomeFlag = (this.state.outcome == "New") ? true : false;
 				this.setState({
 					edit: false,
 					details: false,
+					outcomeFlag : outcomeFlag,
 					error: null
 				});
 				mainActions.finishPromptPoint(this.props.index, question.value, validOptions);
@@ -67,9 +93,44 @@ export default class PromptPoint extends React.Component {
 		}
 	}
 
+	_setPromptPointOutcome() {
+		const { newUrl } = this.refs;
+		mainActions.newURLPromptPoint(this.props.index, newUrl.value);
+	}
+
+	_renderEdit3() {
+		const { outcome, error } = this.state;
+		let outcomeInput;
+
+		switch(outcome) {
+			case "New": {
+				outcomeInput = (
+					<div>
+						<div className="prompt-row">New Video URL:</div>
+						<div className="prompt-row"><input type="text" ref="newUrl"/></div>
+					</div>	
+				)
+				break;
+			}
+		}
+
+		return (
+			<div className="prompt-point">
+				{ outcomeInput }
+				<div className="prompt-row">
+					<button className="btn btn-danger" onClick={this._cancelPromptPoint.bind(this)}>
+						<i className="fa fa-trash" aria-hidden="true"></i>
+					</button>
+					<button className="btn btn-success" onClick={this._setPromptPointOutcome.bind(this)}>Done!</button>
+				</div>
+				<div className="error">{error}</div>
+			</div>
+		)
+	}
+
 	_renderEdit2() {
-		const { type, outcome, error } = this.state;
-		let typeInput, outcomeInput;
+		const { type, error } = this.state;
+		let typeInput;
 		switch(type) {
 			case "Question": {
 				typeInput = (
@@ -120,6 +181,7 @@ export default class PromptPoint extends React.Component {
 					<div>Outcome:</div>
 					<select ref="outcome">
   						<option value="Continue">Continue Video</option>
+  						<option value="New">New Video</option>
 					</select>
 				</div>
 				<div className="prompt-row">
@@ -152,14 +214,30 @@ export default class PromptPoint extends React.Component {
 		);
 	}
 
+	componentWillMount() {
+		MainStore.on("urlReceived", ()=>{
+			this.setState({
+				outcomeFlag: false,
+				error: null
+			});
+		});
+		MainStore.on("urlError", ()=>{
+			this.setState({
+				error: "Please enter a valid Youtube Video URL"
+			});
+		});
+	}
+
 	render() {
-		const { edit, detail } = this.state;
+		const { edit, detail, outcomeFlag } = this.state;
 		
 		let promptPoint;
 		if (edit && detail) {
 			promptPoint = this._renderEdit2();
 		} else if(edit) {
 			promptPoint = this._renderEdit1();
+		} else if(outcomeFlag){
+			promptPoint = this._renderEdit3();
 		} else {
 			promptPoint = this._renderComplete();
 		}

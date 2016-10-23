@@ -11,13 +11,17 @@ export function advanceIntro(count) {
 
 export function queryForVideo(url) {
 	dispatcher.dispatch({ type: "FETCHING_MAIN_VIDEO" });
-	axios.get("https://sope57.github.io/adventurevideo/src/php/getYoutube.php?url=" + url)
+	const vidkey = url.substr(url.length - 11, 11);
+	axios.get("https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id="+vidkey+"&key=AIzaSyA0mhtFXzJ_cFy6PMdGqSUJsV8ve8ANDRg")
 		.then((response) => {
-			if (response.data.id) {
-				dispatcher.dispatch({ type: "RECEIVED_MAIN_VIDEO", data: response.data });
+			window.response = response;
+			if (response.data.items[0].id) {
+				dispatcher.dispatch({ type: "RECEIVED_MAIN_VIDEO", data: response.data.items[0] });
 			} else {
 				dispatcher.dispatch({ type: "URL_FETCH_ERROR" });
 			}
+		}).catch((error) => {
+			dispatcher.dispatch({ type: "URL_FETCH_ERROR" });
 		});
 }
 

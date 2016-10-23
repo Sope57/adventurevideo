@@ -10,9 +10,18 @@ export default class Prompt extends React.Component {
 		super(props);
 	}
 
-	_continueVideo() {
-		this.props.player.playVideo();
-		mainActions.resetPromptWindow();
+	_answer() {
+		switch(MainStore.promptPoints[this.props.index].outcome) {
+			case "Continue": {
+				this.props.player.playVideo();
+				mainActions.resetPromptWindow();
+				break;
+			}
+			case "New": {
+				mainActions.resetPromptWindowAndAdvance();
+				break;
+			}
+		}
 	}
 
 	_renderQuestion() {
@@ -20,7 +29,7 @@ export default class Prompt extends React.Component {
 		const options = MainStore.promptPoints[this.props.index].params[1].map((option, index) => {
 			return (
 				<div className="option" key={index}>
-					<button className="btn btn-success" onClick={this._continueVideo.bind(this)}>
+					<button className="btn btn-success" onClick={this._answer.bind(this)}>
 						<i className="fa fa-hand-o-right" aria-hidden="true"></i>
 					</button>
 					<p>{option}</p>

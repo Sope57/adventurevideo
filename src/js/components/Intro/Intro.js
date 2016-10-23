@@ -196,7 +196,7 @@ class ConfirmCourse extends React.Component {
 			title: IntroStore.courseInfo.title,
 			author: IntroStore.courseInfo.author,
 			description: IntroStore.courseInfo.description,
-			video: IntroStore.mainVideo,
+			videos: [IntroStore.mainVideo]
 		};
 		introActions.initMain(courseData);
 	}
