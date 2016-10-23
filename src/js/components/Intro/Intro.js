@@ -1,7 +1,9 @@
 import React from 'react';
 
 import IntroStore from '../../stores/IntroStore';
-import * as storeActions from '../../actions/storeActions';
+import * as introActions from '../../actions/introActions';
+
+require('./intro.sass');
 
 class FlowButton extends React.Component {
 	hancleClick() {
@@ -13,20 +15,27 @@ class FlowButton extends React.Component {
 
 	render(){
 		const { text, flow } = this.props;
-		let buttonText;
+		let buttonText, buttonClass;
 
-		if (text) {
-			buttonText = text;
-		} else {
-			if (flow == "prev") {
+
+		if (flow == "prev") {
+			buttonClass = "btn-danger";
+			if (text) {
+				buttonText = text;
+			} else {
 				buttonText = <i className="fa fa-flip-horizontal fa-play" aria-hidden="true"></i>;
+			}
+		} else {
+			buttonClass = "btn-success";
+			if (text) {
+				buttonText = text;
 			} else {
 				buttonText = <i className="fa fa-play" aria-hidden="true"></i>;
 			}
 		}
 
 		return(
-			<button id={flow} className="btn" onClick={this.hancleClick.bind(this)}>
+			<button id={flow} className={"btn " + buttonClass} onClick={this.hancleClick.bind(this)}>
 				{ buttonText }
 			</button>		
 		);
@@ -46,9 +55,9 @@ class Loader extends React.Component {
 class Welcome extends React.Component {
 	render() {
 		return(
-			<div>
+			<div id="welcome">
 				<h1>Welcome to the super awesome video adventure creation app!</h1>
-				<FlowButton flow="next" click={storeActions.advanceIntro} />
+				<FlowButton flow="next" click={introActions.advanceIntro} />
 			</div>
 		);
 	}
@@ -58,36 +67,69 @@ class FetchVideo extends React.Component {
 	constructor() {
 		super();
 		this.state = {
-			fetching: IntroStore.fetching
+			fetching: IntroStore.fetching,
+			fetchError: IntroStore.fetchError
 		}
+		this._isMounted;
 	}
 
-	handleChange(e) {
+	_handleChange(e) {
+		this.setState({
+			fetching: true
+		})
 		const url = e.target.value;
-		storeActions.queryForVideo(url);
+		introActions.queryForVideo(url);
+	}
+
+	componentWillMount() {
+		IntroStore.on("urlError", ()=>{
+			if(this._isMounted){ 
+				this.setState({
+					fetching: false,
+					fetchError: IntroStore.fetchError
+				});
+			}
+		})
+	}
+
+	componentDidMount() {
+		this._isMounted = true;
 	}
 
 	render() {
+		const { fetching, fetchError } = this.state;
+		const loader = (fetching ? <Loader /> : null);
+
 		return(
-			<div>
+			<div id="fetcher">
+				{loader}
 				<h3>Please insert your Main Video URL to continue.</h3>
 				<p><i>You will be able to add more videos later on.</i></p>
-				<input type="text" placeholder="Only youtube for the moment :') plz be happy :D" onChange={this.handleChange.bind(this)}/>
+				<input type="text" placeholder="Only youtube for the moment :') plz be happy :D" onChange={this._handleChange.bind(this)}/>
+				<div className="error">{fetchError}</div>
 			</div>
 		);
+	}
+
+	componentWillUnmount() {
+		this._isMounted = false;
 	}
 }
 
 class ConfirmVideo extends React.Component {
 	render() {
 		return(
-			<div>
+			<div id="video-confirm">
 				<h3>Is this your video?</h3>
-				<img src={IntroStore.mainVideo.thumbnail_url} alt=""/>
-				<p><i>{IntroStore.mainVideo.title}</i></p>
+				<h1>{IntroStore.mainVideo.snippet.title}</h1>
+				<img src={
+					IntroStore.mainVideo.snippet.thumbnails.high.url || 
+					IntroStore.mainVideo.snippet.thumbnails.medium.url || 
+					IntroStore.mainVideo.snippet.thumbnails.default.url
+				} alt=""/>
 				<div>
-					<FlowButton text="Nope..." flow="prev" click={storeActions.backIntro} />
-					<FlowButton text="Absolutely!" flow="next" click={storeActions.advanceIntro} />
+					<FlowButton text="Nope..." flow="prev" click={introActions.backIntro} />
+					<FlowButton text="Absolutely!" flow="next" click={introActions.advanceIntro} />
 				</div>
 			</div>
 		);
@@ -105,7 +147,7 @@ class CourseData extends React.Component {
 	checkForData() {
 		const { title, description, author } = this.refs;
 		if (title.value && description.value && author.value) {
-			storeActions.sendCourseData(title.value, description.value, author.value);
+			introActions.sendCourseData(title.value, description.value, author.value);
 		} else {
 			this.setState({
 				alert: true
@@ -116,7 +158,7 @@ class CourseData extends React.Component {
 	render() {
 		const alertMessage = this.state.alert ? "Please fill out all remaining information." : null;
 		return(
-			<div>
+			<div id="course-data">
 				<h3>Awesome! Please help us out with your course info:</h3>
 				<div>
 					<h4>Course Title:</h4>
@@ -131,7 +173,7 @@ class CourseData extends React.Component {
 					<input type="text" placeholder="-Your name here-" ref="author"/>
 				</div>
 				<p><i>{alertMessage}</i></p>
-				<FlowButton text="Changed my mind" flow="prev" click={storeActions.backIntro} flowCount={2}/>
+				<FlowButton text="Changed my mind" flow="prev" click={introActions.backIntro} flowCount={2}/>
 				<FlowButton text="Almost Done!" flow="next" click={this.checkForData.bind(this)} />
 			</div>
 		);
@@ -145,22 +187,36 @@ class ConfirmCourse extends React.Component {
 			title: IntroStore.courseInfo.title,
 			author: IntroStore.courseInfo.author,
 			description: IntroStore.courseInfo.description,
-			thumbnail: IntroStore.mainVideo.thumbnail_url,
+			thumbnail: IntroStore.mainVideo.snippet.thumbnails,
 		}
+	}
+
+	sendConfirmedData() {
+		const courseData = {
+			title: IntroStore.courseInfo.title,
+			author: IntroStore.courseInfo.author,
+			description: IntroStore.courseInfo.description,
+			video: IntroStore.mainVideo,
+		};
+		introActions.initMain(courseData);
 	}
 
 	render() {
 		const { title, author, description, thumbnail } = this.state;
 
 		return(
-			<div>
+			<div id="confirm-data">
 				<h3>Please review that all your information is correct:</h3>
 				<h2>{title}</h2>
 				<h4>By {author}</h4>
-				<img src={thumbnail} alt=""/>
+				<img src={
+					thumbnail.high.url || 
+					thumbnail.medium.url || 
+					thumbnail.default.url
+				} alt=""/>
 				<p>{description}</p>
-				<FlowButton text="Not quite my course" flow="prev" click={storeActions.backIntro} flowCount={3}/>
-				<FlowButton text="Perfect! Get me started" flow="next" click={storeActions.advanceIntro} />
+				<FlowButton text="Not quite my course" flow="prev" click={introActions.backIntro} flowCount={3}/>
+				<FlowButton text="Perfect! Get me started" flow="next" click={this.sendConfirmedData.bind(this)} />
 			</div>
 		);
 	}
@@ -171,7 +227,6 @@ export default class Intro extends React.Component {
 		super(props);
 		this.state = {
 			stage: IntroStore.stage,
-			fetching: IntroStore.fetching
 		}
 	}
 
@@ -179,14 +234,12 @@ export default class Intro extends React.Component {
 		IntroStore.on("change", () => {
 			this.setState({
 				stage: IntroStore.stage,
-				fetching: IntroStore.fetching
 			});
 		});
 	}
 
 	render() {
-		const { stage, fetching } = this.state;
-		const loader = (fetching ? <Loader /> : null);
+		const { stage } = this.state;
 
 		let renderView;
 		switch(stage) {
@@ -216,7 +269,6 @@ export default class Intro extends React.Component {
 			<div id="intro" className="text-center">
 				<div className="container">
 					<div className="row">
-						{loader || null}
 						{renderView}
 					</div>
 				</div>

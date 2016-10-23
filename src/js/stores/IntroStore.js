@@ -9,6 +9,7 @@ class IntroStore extends EventEmitter {
 		this.fetching = false;
 		this.mainVideo = null;
 		this.courseInfo = null;
+		this.fetchError = null;
 	}
 
 	handleActions(action) {
@@ -31,8 +32,15 @@ class IntroStore extends EventEmitter {
 			case "RECEIVED_MAIN_VIDEO": {
 				this.stage = this.stage + 1;
 				this.fetching = false;
+				this.fetchError = null;
 				this.mainVideo = action.data;
 				this.emit("change");
+				break;
+			}
+			case "URL_FETCH_ERROR": {
+				this.fetching = false;
+				this.fetchError = "Please insert a valid Youtube Video URL.";
+				this.emit("urlError");
 				break;
 			}
 			case "RECEIVE_COURSE_DATA": {
@@ -51,6 +59,6 @@ class IntroStore extends EventEmitter {
 
 const introStore = new IntroStore;
 dispatcher.register(introStore.handleActions.bind(introStore));
-window.store = introStore;
+window.introStore = introStore;
 
 export default introStore;
